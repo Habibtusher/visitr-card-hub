@@ -1,92 +1,132 @@
-import React, { useState, useCallback } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Upload, X, CheckCircle, AlertCircle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import React, { useState, useCallback } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Upload, X, CheckCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ImageUploadProps {
   onUploadComplete?: (imageUrl: string) => void;
 }
 
-export const ImageUpload: React.FC<ImageUploadProps> = ({ onUploadComplete }) => {
+export const ImageUpload: React.FC<ImageUploadProps> = ({
+  onUploadComplete,
+}) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const { toast } = useToast();
 
-  const handleFileSelect = useCallback((file: File) => {
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: "Invalid file type",
-        description: "Please select an image file.",
-        variant: "destructive"
-      });
-      return;
-    }
+  const handleFileSelect = useCallback(
+    (file: File) => {
+      if (!file.type.startsWith("image/")) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select an image file.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    if (file.size > 5 * 1024 * 1024) { // 5MB limit
-      toast({
-        title: "File too large",
-        description: "Please select an image smaller than 5MB.",
-        variant: "destructive"
-      });
-      return;
-    }
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    setSelectedFile(file);
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
-    setUploadSuccess(false);
-  }, [toast]);
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+      setUploadSuccess(false);
+    },
+    [toast]
+  );
 
-  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      handleFileSelect(files[0]);
-    }
-  }, [handleFileSelect]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      const files = Array.from(e.dataTransfer.files);
+      if (files.length > 0) {
+        handleFileSelect(files[0]);
+      }
+    },
+    [handleFileSelect]
+  );
 
-  const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      handleFileSelect(files[0]);
-    }
-  }, [handleFileSelect]);
+  const handleFileInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (files && files.length > 0) {
+        handleFileSelect(files[0]);
+      }
+    },
+    [handleFileSelect]
+  );
 
   const uploadToBackend = async () => {
     if (!selectedFile) return;
-console.log("upload will call here........");
+
     setIsUploading(true);
     try {
-      // Create FormData for file upload
-      const formData = new FormData();
-      formData.append('visitingCard', selectedFile);
-
-      // Replace with your backend API endpoint
-      const response = await fetch('/api/upload-visiting-card', {
-        method: 'POST',
-        body: formData,
+      // 1. Request upload URL
+      const extension = selectedFile.name.split(".").pop()!;
+      const newUploadRes = await fetch(
+        "https://visiting.ridoy.dev/api/v1/upload/new",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            extension,
+            contentType: selectedFile.type,
+          }),
+        }
+      ).then((res) => {
+        if (!res.ok) throw new Error(`Upload URL request failed: ${res.status}`);
+        return res.json();
       });
 
-      if (!response.ok) {
-        throw new Error('Upload failed');
+      // 2. Upload file to S3
+      const s3Upload = await fetch(newUploadRes?.data?.url, {
+        method: "POST",
+        body: selectedFile,
+      });
+      if (!s3Upload.ok) {
+        throw new Error(`S3 upload failed: ${s3Upload.status}`);
+      }
+      console.log("uuuu",s3Upload);
+      // 3. Call parse-visiting-card API with the fileUrl
+      const parseResponse = await fetch(
+        "https://visiting.ridoy.dev/api/v1/parse-visiting-card",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageUrl: newUploadRes?.data?.key }),
+        }
+      );
+      if (!parseResponse.ok) {
+        const errorText = await parseResponse.text();
+        throw new Error(`Parsing failed: ${parseResponse.status} - ${errorText}`);
       }
 
-      const data = await response.json();
+      const parsedData = await parseResponse.json();
+      console.log("Parsed Data:", parsedData);
+
       setUploadSuccess(true);
-      onUploadComplete?.(data.imageUrl);
-      
+      onUploadComplete?.(newUploadRes?.data?.key);
+
       toast({
         title: "Upload successful!",
         description: "Your visiting card has been uploaded and processed.",
       });
     } catch (error) {
+      console.error("Upload & Parse Error:", error);
       toast({
         title: "Upload failed",
         description: "Please try again later.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsUploading(false);
@@ -95,13 +135,11 @@ console.log("upload will call here........");
 
   const clearSelection = () => {
     setSelectedFile(null);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
     setUploadSuccess(false);
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
   };
-console.log("selected file here",selectedFile);
+
   return (
     <Card className="p-8 shadow-card bg-gradient-card border-0">
       <div className="space-y-6">
@@ -151,7 +189,7 @@ console.log("selected file here",selectedFile);
               >
                 <X className="h-4 w-4" />
               </Button>
-              
+
               {previewUrl && (
                 <div className="flex justify-center">
                   <img
@@ -161,7 +199,7 @@ console.log("selected file here",selectedFile);
                   />
                 </div>
               )}
-              
+
               <div className="mt-4 text-center">
                 <p className="font-medium text-foreground">{selectedFile.name}</p>
                 <p className="text-sm text-muted-foreground">
@@ -193,7 +231,7 @@ console.log("selected file here",selectedFile);
                   </>
                 )}
               </Button>
-              
+
               <Button variant="outline" onClick={clearSelection}>
                 Clear
               </Button>

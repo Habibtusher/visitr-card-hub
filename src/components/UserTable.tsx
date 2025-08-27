@@ -71,14 +71,15 @@ export const UserTable: React.FC = ({ refreshTrigger }: UserTableProps) => {
         ...(search && { search }),
       });
 
-      const response = await fetch(`https://01d7eca03877.ngrok.app/api/v1/extract-contacts?${params}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-      
-        },
-      });
-      
+      const response = await fetch(
+        `https://visiting.ridoy.dev/api/v1/extract-contacts?${params}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to fetch users");
@@ -267,17 +268,7 @@ export const UserTable: React.FC = ({ refreshTrigger }: UserTableProps) => {
                       </div>
                     </td>
                     <td className="p-4">
-                      {user.website && (
-                        <a
-                          href={user.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center space-x-1 text-primary hover:text-primary-glow transition-smooth"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                          <span>Visit</span>
-                        </a>
-                      )}
+                      {user.website && <span>{user.website}</span>}
                     </td>
                   </tr>
                 ))
