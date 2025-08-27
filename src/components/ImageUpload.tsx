@@ -57,7 +57,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({ onUploadComplete }) =>
 
   const uploadToBackend = async () => {
     if (!selectedFile) return;
-
+console.log("upload will call here........");
     setIsUploading(true);
     try {
       // Create FormData for file upload
@@ -101,7 +101,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({ onUploadComplete }) =>
       URL.revokeObjectURL(previewUrl);
     }
   };
-
+console.log("selected file here",selectedFile);
   return (
     <Card className="p-8 shadow-card bg-gradient-card border-0">
       <div className="space-y-6">

@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ImageUpload } from '@/components/ImageUpload';
 import { UserTable } from '@/components/UserTable';
 
 const Index = () => {
+  const [refreshTable, setRefreshTable] = useState(false);
   const handleUploadComplete = (imageUrl: string) => {
-    console.log('Image uploaded successfully:', imageUrl);
-    // You can add additional logic here if needed
+    setRefreshTable((prev) => !prev);
   };
 
   return (
@@ -33,7 +33,7 @@ const Index = () => {
 
         {/* User Table Section */}
         <section>
-          <UserTable />
+          <UserTable refreshTrigger={refreshTable} />
         </section>
       </main>
 
