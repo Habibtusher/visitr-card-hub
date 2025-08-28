@@ -131,7 +131,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       console.error("Upload & Parse Error:", error);
       toast({
         title: "Upload failed",
-        description: "Please try again later.",
+        description: `${error?.message}`,
         variant: "destructive",
       });
     } finally {
