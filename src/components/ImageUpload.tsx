@@ -91,7 +91,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
       // 2. Upload file to S3
       const s3Upload = await fetch(newUploadRes?.data?.url, {
-        method: "POST",
+        method: "PUT",
         body: selectedFile,
       });
       if (!s3Upload.ok) {
@@ -104,7 +104,9 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: `https://retail-pluse-upload.s3.ap-southeast-1.amazonaws.com/${newUploadRes?.data?.key}`,
+          body: JSON.stringify({
+            imageUrl: `https://retail-pluse-upload.s3.ap-southeast-1.amazonaws.com/${newUploadRes?.data?.key}`,
+          }),
         }
       );
       if (!parseResponse.ok) {
