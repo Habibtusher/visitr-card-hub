@@ -111,10 +111,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         }
       );
       if (!parseResponse.ok) {
-        const errorText = await parseResponse.text();
-        throw new Error(
-          `Parsing failed: ${parseResponse.status} - ${errorText}`
-        );
+        const errorText = await parseResponse.json();
+        throw new Error(errorText?.message);
       }
 
       const parsedData = await parseResponse.json();
