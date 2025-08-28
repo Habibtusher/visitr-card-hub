@@ -106,6 +106,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             imageUrl: `https://retail-pluse-upload.s3.ap-southeast-1.amazonaws.com/${newUploadRes?.data?.key}`,
+            provider: "google",
           }),
         }
       );
