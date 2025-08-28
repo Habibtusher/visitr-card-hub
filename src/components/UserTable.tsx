@@ -35,19 +35,7 @@ interface UserTableProps {
   refreshTrigger: boolean;
 }
 export const UserTable: React.FC = ({ refreshTrigger }: UserTableProps) => {
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: "4f17f858-9ea1-45f2-8f08-5372fdaced3f",
-      name: "8",
-      email: "yoursitename@.com",
-      phone: null,
-      company: "LOREM PRO",
-      jobTitle: "TITLE GOES HERE",
-      website: null,
-      source:
-        "https://static.vecteezy.com/system/resources/previews/007/043/394/non_2x/modern-creative-simple-clean-business-card-or-visiting-card-design-template-with-unique-shapes-free-vector.jpg",
-    },
-  ]);
+  const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
