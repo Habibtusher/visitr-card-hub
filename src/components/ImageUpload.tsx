@@ -84,7 +84,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           }),
         }
       ).then((res) => {
-        if (!res.ok) throw new Error(`Upload URL request failed: ${res.status}`);
+        if (!res.ok)
+          throw new Error(`Upload URL request failed: ${res.status}`);
         return res.json();
       });
 
@@ -96,19 +97,21 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       if (!s3Upload.ok) {
         throw new Error(`S3 upload failed: ${s3Upload.status}`);
       }
-      console.log("uuuu",s3Upload);
+      console.log("uuuu", s3Upload);
       // 3. Call parse-visiting-card API with the fileUrl
       const parseResponse = await fetch(
         "https://visiting.ridoy.dev/api/v1/parse-visiting-card",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imageUrl: newUploadRes?.data?.key }),
+          body: `https://retail-pluse-upload.s3.ap-southeast-1.amazonaws.com/${newUploadRes?.data?.key}`,
         }
       );
       if (!parseResponse.ok) {
         const errorText = await parseResponse.text();
-        throw new Error(`Parsing failed: ${parseResponse.status} - ${errorText}`);
+        throw new Error(
+          `Parsing failed: ${parseResponse.status} - ${errorText}`
+        );
       }
 
       const parsedData = await parseResponse.json();
@@ -148,7 +151,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
             Upload Visiting Card
           </h2>
           <p className="text-muted-foreground">
-            Upload an image of a visiting card to extract and save the information
+            Upload an image of a visiting card to extract and save the
+            information
           </p>
         </div>
 
@@ -201,7 +205,9 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
               )}
 
               <div className="mt-4 text-center">
-                <p className="font-medium text-foreground">{selectedFile.name}</p>
+                <p className="font-medium text-foreground">
+                  {selectedFile.name}
+                </p>
                 <p className="text-sm text-muted-foreground">
                   {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                 </p>
